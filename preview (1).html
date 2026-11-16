@@ -1,0 +1,730 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EARNTOO | Play & Earn</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#fff;font-family:Arial,sans-serif}
+button{border:0;border-radius:10px;padding:11px 15px;background:#3478f6;color:#fff;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+input{width:100%;padding:12px;border-radius:9px;background:#0d162a;color:white;border:1px solid #465575;margin:8px 0}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:#111b30;padding:15px;flex-shrink:0}
+.logo{font-size:25px;font-weight:900;color:#60e5f5;padding:12px 8px 25px}
+.nav{display:block;width:100%;text-align:left;background:transparent;color:#c3cde0;margin:4px 0;padding:14px 12px}
+.nav.active{background:#263a60;color:white}
+main{flex:1;min-width:0;padding:20px;max-width:1250px}
+.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.balance,.panel{background:#151f36;padding:17px;border-radius:15px;margin:15px 0}
+.balance strong{font-size:26px;color:#42e5a1}
+.page,.game{display:none}
+.page.active,.game.active{display:block}
+.games{display:grid;grid-template-columns:repeat(5,minmax(100px,1fr));gap:9px}
+.gamecard,.reward{background:#243453;border-radius:12px;padding:15px}
+.gamecard{text-align:center;cursor:pointer}
+.gamecard span{display:block;font-size:28px;margin-bottom:7px}
+.gamecard small{display:block;color:#aab8d2;margin-top:5px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.reward button{margin-top:10px}
+.muted{color:#aab8d2;font-size:13px;line-height:1.5}
+.badge{font-size:12px;background:#30466b;border-radius:20px;padding:6px 9px;display:inline-block}
+.option{display:block;width:100%;text-align:left;margin:8px 0;background:#293d60}
+#board{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;max-width:400px;margin:15px auto}
+.cell{aspect-ratio:1;background:#2a3854;border-radius:5px;cursor:pointer}
+#pieces{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.piece{background:#253653;padding:10px;border-radius:10px;cursor:pointer;border:2px solid transparent;min-width:70px}
+.piece.selected{border-color:white}
+.piecegrid{display:grid;gap:3px;justify-content:center}
+.piececell{width:19px;height:19px;border-radius:4px}
+#numberGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+#numberGrid button{padding:15px 5px}
+#memoryGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:370px;margin:15px auto}
+.memorycard{height:65px;font-size:25px;background:#293d60}
+#targetArea{height:260px;position:relative;background:#0d162a;border-radius:12px;margin:15px 0;overflow:hidden}
+#targetBtn{width:65px;height:65px;border-radius:50%;font-size:25px;position:absolute;left:40%;top:40%}
+.soundcontrols{display:flex;gap:8px;flex-wrap:wrap}
+#toast{display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#293f65;padding:13px 18px;border-radius:12px;z-index:10;max-width:90%;text-align:center}
+footer{text-align:center;color:#8291ad;font-size:12px;padding:20px}
+@media(max-width:700px){
+ .layout{display:block}
+ .sidebar{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:8px}
+ .logo{grid-column:1/-1;text-align:center;padding:5px}
+ .nav{text-align:center;font-size:12px;padding:11px 2px}
+ main{padding:10px}
+ .games{grid-template-columns:repeat(2,1fr)}
+ .grid2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+ <div class="logo">🪙 EARNTOO</div>
+ <button class="nav active" onclick="showPage('play',this)">🎮 Play & Earn</button>
+ <button class="nav" onclick="showPage('tasks',this)">📋 Tasks</button>
+ <button class="nav" onclick="showPage('redeem',this)">🎁 Rewards</button>
+ <button class="nav" onclick="showPage('account',this)">👤 Dashboard</button>
+ <button class="nav" onclick="showPage('settings',this)">⚙️ Settings</button>
+</aside>
+
+<main>
+<div class="top">
+ <div>
+  <h2 id="pageTitle">🎮 Play & Earn</h2>
+  <p class="muted">Play games, complete tasks and collect points.</p>
+ </div>
+ <div class="balance">YOUR POINTS<br><strong id="points">0</strong> pts</div>
+</div>
+
+<section class="page active" id="play">
+ <div class="panel">
+  <h2>🎮 All Games</h2>
+  <div class="games">
+   <div class="gamecard" onclick="openGame('block')"><span>🧩</span>Block Puzzle<small>Clear lines</small></div>
+   <div class="gamecard" onclick="openGame('quiz')"><span>🧠</span>Daily Quiz<small>5 questions</small></div>
+   <div class="gamecard" onclick="openGame('number')"><span>🔢</span>Number Rush<small>1–20</small></div>
+   <div class="gamecard" onclick="openGame('target')"><span>🎯</span>Target Tap<small>20 seconds</small></div>
+   <div class="gamecard" onclick="openGame('memory')"><span>🎮</span>Memory Match<small>Find pairs</small></div>
+  </div>
+ </div>
+
+ <div class="game active panel" id="block">
+  <h2>🧩 Block Puzzle</h2>
+  <p>Lines: <b id="lineCount">0</b> / 10</p>
+  <p class="muted">Select a block and place it on the board. Complete rows or columns to earn points.</p>
+  <div id="board"></div>
+  <p style="text-align:center">Choose a block:</p>
+  <div id="pieces"></div>
+  <p id="blockMsg" class="muted"></p>
+  <button onclick="startBlock()">Restart Game</button>
+ </div>
+
+ <div class="game panel" id="quiz">
+  <h2>🧠 Daily Quiz</h2>
+  <p id="quizProgress">Question 1/5</p>
+  <h3 id="quizQuestion"></h3>
+  <div id="quizAnswers"></div>
+  <p id="quizMsg" class="muted"></p>
+  <button id="quizNext" onclick="quizNext()" style="display:none">Next Question</button>
+  <p id="quizLock" class="muted"></p>
+ </div>
+
+ <div class="game panel" id="number">
+  <h2>🔢 Number Rush</h2>
+  <p>Tap numbers in order from 1 to 20 before time runs out.</p>
+  <p>Next: <b id="nextNumber">1</b> | Time: <b id="numberTime">30</b>s</p>
+  <div id="numberGrid"></div>
+  <p id="numberMsg" class="muted"></p>
+  <button onclick="startNumber()">Start Game</button>
+ </div>
+
+ <div class="game panel" id="target">
+  <h2>🎯 Target Tap</h2>
+  <p>Tap the moving target as many times as possible in 20 seconds.</p>
+  <p>Score: <b id="targetScore">0</b> | Time: <b id="targetTime">20</b>s</p>
+  <div id="targetArea"><button id="targetBtn" onclick="hitTarget()" disabled>🎯</button></div>
+  <p id="targetMsg" class="muted"></p>
+  <button onclick="startTarget()">Start Game</button>
+ </div>
+
+ <div class="game panel" id="memory">
+  <h2>🎮 Memory Match</h2>
+  <p>Find all 8 matching pairs.</p>
+  <p>Moves: <b id="memoryMoves">0</b></p>
+  <div id="memoryGrid"></div>
+  <p id="memoryMsg" class="muted"></p>
+  <button onclick="startMemory()">Restart Game</button>
+ </div>
+</section>
+
+<section class="page" id="tasks">
+ <div class="panel">
+  <h2>📋 Task to Earn</h2>
+  <div class="reward">
+   <h3>📅 Daily Check-in</h3>
+   <p class="muted">Claim 10 points once per day.</p>
+   <button id="checkinBtn" onclick="dailyCheckin()">Claim 10 Points</button>
+  </div>
+  <div class="reward" style="margin-top:12px">
+   <h3>▶️ YouTube Task</h3>
+   <p class="muted">YouTube task verification is not connected yet.</p>
+   <button onclick="toast('YouTube task is not connected yet')">View Task</button>
+  </div>
+ </div>
+
+ <div class="panel">
+  <h2>📺 Ad to Earn</h2>
+  <p class="muted">Only verified rewarded ads can count towards milestones.</p>
+  <p>Completed ads: <b id="adCount">0</b></p>
+  <div class="reward" style="margin:10px 0">
+   <h3>Milestone 1 — 10 Ads</h3>
+   <p>Reward: <b>100 points</b></p>
+   <p id="milestone10" class="muted">Progress: 0 / 10</p>
+  </div>
+  <div class="reward" style="margin:10px 0">
+   <h3>Milestone 2 — 75 Ads</h3>
+   <p>Reward: <b>250 points</b></p>
+   <p id="milestone75" class="muted">Progress: 0 / 75</p>
+  </div>
+  <div class="reward" style="margin:10px 0">
+   <h3>Milestone 3 — 150 Ads</h3>
+   <p>Reward: <b>1,000 points</b></p>
+   <p id="milestone150" class="muted">Progress: 0 / 150</p>
+  </div>
+  <button onclick="watchRewardedAd()">▶️ Watch Rewarded Ad</button>
+  <p id="adStatus" class="muted">Rewarded ad provider is not connected. Ad rewards are currently inactive.</p>
+ </div>
+</section>
+
+<section class="page" id="redeem">
+ <div class="panel">
+  <h2>🎁 Redeem Rewards</h2>
+  <p class="muted">Choose a reward category. Requests remain pending until a legitimate rewards provider is connected.</p>
+  <div class="grid2">
+   <div class="reward">
+    <div style="font-size:30px">▶️</div>
+    <h3>Google Play Rewards</h3>
+    <span class="badge">2,500 points = ₹10</span>
+    <p class="muted">Google Play reward request.</p>
+    <button onclick="requestReward('Google Play',2500)">Request ₹10</button>
+   </div>
+   <div class="reward">
+    <div style="font-size:30px">📦</div>
+    <h3>Amazon Rewards</h3>
+    <span class="badge">2,500 points = ₹10</span>
+    <p class="muted">Amazon reward request.</p>
+    <button onclick="requestReward('Amazon',2500)">Request ₹10</button>
+   </div>
+   <div class="reward">
+    <div style="font-size:30px">📱</div>
+    <h3>UPI Credit</h3>
+    <span class="badge">5,000 points = ₹10</span>
+    <p class="muted">UPI credit request. Never share your UPI PIN or OTP.</p>
+    <button onclick="requestReward('UPI Credit',5000)">Request ₹10</button>
+   </div>
+  </div>
+  <div class="reward" style="margin-top:15px">
+   <h3>📑 My Reward Requests</h3>
+   <div id="rewardRequests" class="muted">No requests yet.</div>
+  </div>
+  <p class="muted">Important: Real gift cards and UPI payments require a verified provider and secure backend. This page does not generate fake codes or claim fake payments.</p>
+ </div>
+</section>
+
+<section class="page" id="account">
+ <div class="panel">
+  <h2>👤 Dashboard</h2>
+  <h3 id="dashName">Player</h3>
+  <div class="grid2">
+   <div class="reward">
+    <p class="muted">TOTAL POINTS</p>
+    <h2><span id="dashPoints">0</span> pts</h2>
+   </div>
+   <div class="reward">
+    <p class="muted">ESTIMATED RUPEE VALUE</p>
+    <h2>₹<span id="dashValue">0.00</span></h2>
+    <p class="muted">Dashboard estimate: 2,000 points = ₹10</p>
+   </div>
+  </div>
+  <p class="muted">Dashboard is for viewing your balance only. There is no direct redeem button here.</p>
+ </div>
+ <div class="panel">
+  <h2>✏️ Player Profile</h2>
+  <label>Player Name</label>
+  <input id="nickname" maxlength="30" placeholder="Enter your player name">
+  <button onclick="saveProfile()">Save Name</button>
+  <p id="profileMsg" class="muted"></p>
+ </div>
+</section>
+
+<section class="page" id="settings">
+ <div class="panel">
+  <h2>⚙️ Settings</h2>
+  <h3>🔊 Sound & Music</h3>
+  <div class="soundcontrols">
+   <button id="musicBtn" onclick="toggleMusic()">🎵 Play Music</button>
+   <button id="soundBtn" onclick="toggleSound()">🔊 Sound ON</button>
+  </div>
+  <p class="muted">All sound and music controls are available only in Settings.</p>
+ </div>
+ <div class="panel">
+  <h2>ℹ️ About EARNTOO</h2>
+  <p class="muted">EARNTOO — Play • Learn • Earn</p>
+  <p class="muted">Reward and advertising services require provider integration.</p>
+ </div>
+</section>
+<footer>EARNTOO • Play • Learn • Earn</footer>
+</main>
+</div>
+<div id="toast"></div>
+
+<script>
+// ---------- STORAGE & POINTS ----------
+function getData(key, fallback){
+ try{
+  const value=localStorage.getItem("earntoo_"+key);
+  return value===null?fallback:value;
+ }catch(e){return fallback}
+}
+function saveData(key,value){
+ try{localStorage.setItem("earntoo_"+key,String(value))}catch(e){}
+}
+let points=Math.max(0,Number(getData("points","0"))||0);
+let playerName=getData("name","Player");
+
+function updatePoints(){
+ document.getElementById("points").textContent=points;
+ document.getElementById("dashPoints").textContent=points;
+ document.getElementById("dashValue").textContent=(points/200).toFixed(2);
+ saveData("points",points);
+}
+function addPoints(amount,reason){
+ points+=amount;
+ updatePoints();
+ toast("+"+amount+" points — "+reason);
+ effect("win");
+}
+function toast(message){
+ const el=document.getElementById("toast");
+ el.textContent=message;
+ el.style.display="block";
+ clearTimeout(window.toastTimer);
+ window.toastTimer=setTimeout(()=>el.style.display="none",2500);
+}
+function showPage(id,button){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ document.querySelectorAll(".nav").forEach(n=>n.classList.remove("active"));
+ if(button)button.classList.add("active");
+ const titles={play:"🎮 Play & Earn",tasks:"📋 Tasks",redeem:"🎁 Rewards",account:"👤 Dashboard",settings:"⚙️ Settings"};
+ document.getElementById("pageTitle").textContent=titles[id]||"EARNTOO";
+ if(id==="account")updateDashboard();
+ if(id==="tasks")updateAdUI();
+ if(id==="redeem")renderRequests();
+ effect("click");
+}
+function openGame(id){
+ document.querySelectorAll(".game").forEach(g=>g.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ effect("click");
+}
+
+// ---------- SOUND: SETTINGS ONLY ----------
+let audioContext=null;
+let soundEnabled=getData("sound","true")==="true";
+let musicEnabled=false,musicTimer=null,musicIndex=0;
+function getAudio(){
+ if(!audioContext)audioContext=new(window.AudioContext||window.webkitAudioContext)();
+ if(audioContext.state==="suspended")audioContext.resume();
+ return audioContext;
+}
+function note(freq,duration,volume=.03,type="sine"){
+ if(!soundEnabled&&type!=="music")return;
+ try{
+  const c=getAudio(),o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(volume,c.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,c.currentTime+duration);
+  o.connect(g);g.connect(c.destination);
+  o.start();o.stop(c.currentTime+duration);
+ }catch(e){}
+}
+function effect(name){
+ if(!soundEnabled)return;
+ if(name==="click")note(650,.07,.02);
+ if(name==="place")note(390,.1,.03);
+ if(name==="clear"){note(550,.13,.04);setTimeout(()=>note(760,.17,.04),90)}
+ if(name==="win"){
+  note(523,.18,.04);
+  setTimeout(()=>note(659,.18,.04),140);
+  setTimeout(()=>note(784,.3,.04),280);
+ }
+ if(name==="wrong")note(180,.2,.04,"triangle");
+}
+function toggleSound(){
+ soundEnabled=!soundEnabled;
+ saveData("sound",soundEnabled);
+ document.getElementById("soundBtn").textContent=soundEnabled?"🔊 Sound ON":"🔇 Sound OFF";
+}
+function toggleMusic(){
+ musicEnabled=!musicEnabled;
+ const button=document.getElementById("musicBtn");
+ if(musicEnabled){
+  getAudio();
+  button.textContent="⏸ Stop Music";
+  const melody=[261.63,329.63,392,329.63,293.66,349.23,440,349.23];
+  musicTimer=setInterval(()=>{
+   if(musicEnabled){
+    note(melody[musicIndex++%melody.length],1.1,.012,"music");
+   }
+  },700);
+ }else{
+  clearInterval(musicTimer);
+  button.textContent="🎵 Play Music";
+ }
+}
+
+// ---------- BLOCK PUZZLE ----------
+const COLORS=["#ef5350","#29c77c","#368cff","#f2bd38","#ac6bfa","#ff873c"];
+const SHAPES=[
+ [[1]],[[1,1]],[[1],[1]],[[1,1],[1,1]],[[1,1,1]],
+ [[1],[1],[1]],[[1,0],[1,1]],[[0,1],[1,1]],
+ [[1,1,1],[0,1,0]],[[1,1,1,1]],[[1,0],[1,0],[1,1]],[[1,1],[1,0]]
+];
+let board=[],pieces=[],selected=-1,lines=0,blockEnded=false;
+function randomPiece(){
+ return{shape:SHAPES[Math.floor(Math.random()*SHAPES.length)],color:COLORS[Math.floor(Math.random()*COLORS.length)]};
+}
+function freshPieces(){pieces=[randomPiece(),randomPiece(),randomPiece()]}
+function startBlock(){
+ board=Array.from({length:8},()=>Array(8).fill(""));
+ freshPieces();selected=-1;lines=0;blockEnded=false;
+ document.getElementById("blockMsg").textContent="Select a block and place it on the board.";
+ drawBoard();drawPieces();updateBlock();
+}
+function updateBlock(){document.getElementById("lineCount").textContent=lines}
+function drawBoard(){
+ const el=document.getElementById("board");el.innerHTML="";
+ board.forEach((row,r)=>row.forEach((value,c)=>{
+  const cell=document.createElement("div");cell.className="cell";
+  if(value)cell.style.background=value;
+  cell.onclick=()=>place(r,c);el.appendChild(cell);
+ }));
+}
+function drawPieces(){
+ const el=document.getElementById("pieces");el.innerHTML="";
+ pieces.forEach((p,i)=>{
+  const box=document.createElement("div");
+  box.className="piece"+(selected===i?" selected":"");
+  if(!p){box.textContent="Used";box.style.opacity=".3";el.appendChild(box);return}
+  box.onclick=()=>{if(!blockEnded){selected=i;drawPieces()}};
+  const grid=document.createElement("div");grid.className="piecegrid";
+  grid.style.gridTemplateColumns="repeat("+p.shape[0].length+",19px)";
+  p.shape.forEach(row=>row.forEach(value=>{
+   const cell=document.createElement("span");cell.className="piececell";
+   cell.style.background=value?p.color:"transparent";grid.appendChild(cell);
+  }));
+  box.appendChild(grid);el.appendChild(box);
+ });
+}
+function place(r,c){
+ if(blockEnded)return;
+ if(selected<0||!pieces[selected]){toast("First select a block");return}
+ const p=pieces[selected],shape=p.shape;
+ for(let y=0;y<shape.length;y++){
+  for(let x=0;x<shape[y].length;x++){
+   if(shape[y][x]&&(r+y>=8||c+x>=8||board[r+y][c+x])){
+    effect("wrong");return;
+   }
+  }
+ }
+ for(let y=0;y<shape.length;y++){
+  for(let x=0;x<shape[y].length;x++){
+   if(shape[y][x])board[r+y][c+x]=p.color;
+  }
+ }
+ pieces[selected]=null;selected=-1;
+ const rows=[],cols=[];
+ for(let y=0;y<8;y++)if(board[y].every(Boolean))rows.push(y);
+ for(let x=0;x<8;x++)if(board.every(row=>row[x]))cols.push(x);
+ const cleared=rows.length+cols.length;
+ rows.forEach(y=>board[y].fill(""));
+ cols.forEach(x=>board.forEach(row=>row[x]=""));
+ if(cleared){
+  lines+=cleared;addPoints(cleared*10,"Lines cleared");effect("clear");
+ }
+ document.getElementById("blockMsg").textContent=cleared?cleared+" line(s) cleared!":"Good! Keep going.";
+ updateBlock();drawBoard();drawPieces();
+ if(lines>=10){
+  blockEnded=true;
+  document.getElementById("blockMsg").textContent="🎉 10 lines completed!";
+  return;
+ }
+ if(pieces.every(p=>p===null)){freshPieces();drawPieces()}
+}
+
+// ---------- DAILY QUIZ ----------
+const questions=[
+ ["What is the capital of India?",["Delhi","Mumbai","Jaipur"],0],
+ ["What is 5 × 4?",["15","20","25"],1],
+ ["Which is the Red Planet?",["Venus","Mars","Earth"],1],
+ ["How many months are in a year?",["10","11","12"],2],
+ ["What is India's national animal?",["Tiger","Lion","Elephant"],0]
+];
+let qi=0,qscore=0,qanswered=false;
+function quizAvailable(){
+ const last=Number(getData("quizTime","0"));
+ return Date.now()-last>=86400000;
+}
+function startQuiz(){
+ if(!quizAvailable()){showQuizLock();return}
+ qi=0;qscore=0;qanswered=false;showQuestion();
+}
+function showQuizLock(){
+ const left=Math.max(0,86400000-(Date.now()-Number(getData("quizTime","0"))));
+ const hours=Math.floor(left/3600000),minutes=Math.ceil((left%3600000)/60000);
+ document.getElementById("quizProgress").textContent="Daily Quiz";
+ document.getElementById("quizQuestion").textContent="Today's quiz is completed.";
+ document.getElementById("quizAnswers").innerHTML="";
+ document.getElementById("quizNext").style.display="none";
+ document.getElementById("quizLock").textContent="Next quiz available in approximately "+hours+"h "+minutes+"m.";
+}
+function showQuestion(){
+ const q=questions[qi];
+ document.getElementById("quizProgress").textContent="Question "+(qi+1)+"/5";
+ document.getElementById("quizQuestion").textContent=q[0];
+ document.getElementById("quizMsg").textContent="";
+ document.getElementById("quizNext").style.display="none";
+ document.getElementById("quizLock").textContent="";
+ const el=document.getElementById("quizAnswers");el.innerHTML="";
+ q[1].forEach((value,index)=>{
+  const button=document.createElement("button");button.className="option";
+  button.textContent=value;button.onclick=()=>answerQuestion(index);el.appendChild(button);
+ });
+}
+function answerQuestion(index){
+ if(qanswered)return;
+ qanswered=true;
+ const q=questions[qi];
+ document.getElementById("quizMsg").textContent=index===q[2]?"Correct!":"Correct answer: "+q[1][q[2]];
+ if(index===q[2])qscore++;else effect("wrong");
+ document.getElementById("quizNext").style.display="inline-block";
+}
+function quizNext(){
+ if(qi<4){qi++;qanswered=false;showQuestion();return}
+ saveData("quizTime",Date.now());
+ document.getElementById("quizQuestion").textContent="Quiz complete! Score: "+qscore+"/5";
+ document.getElementById("quizAnswers").innerHTML="";
+ document.getElementById("quizNext").style.display="none";
+ document.getElementById("quizLock").textContent="Come back after 24 hours for the next quiz.";
+ if(qscore>=3)addPoints(qscore*10,"Quiz completed");
+}
+
+// ---------- NUMBER RUSH ----------
+let nextNum=1,nTime=30,nTimer=null,nRunning=false;
+function startNumber(){
+ clearInterval(nTimer);nextNum=1;nTime=30;nRunning=true;
+ document.getElementById("nextNumber").textContent=1;
+ document.getElementById("numberTime").textContent=30;
+ document.getElementById("numberMsg").textContent="";
+ const values=Array.from({length:20},(_,i)=>i+1).sort(()=>Math.random()-.5);
+ const el=document.getElementById("numberGrid");el.innerHTML="";
+ values.forEach(value=>{
+  const button=document.createElement("button");button.textContent=value;
+  button.onclick=()=>{
+   if(!nRunning||button.disabled)return;
+   if(value===nextNum){
+    button.disabled=true;nextNum++;
+    document.getElementById("nextNumber").textContent=nextNum;
+    if(nextNum===21){
+     nRunning=false;clearInterval(nTimer);
+     document.getElementById("numberMsg").textContent="You win!";
+     addPoints(30,"Number Rush");
+    }
+   }else{
+    document.getElementById("numberMsg").textContent="Find "+nextNum+" first.";
+   }
+  };
+  el.appendChild(button);
+ });
+ nTimer=setInterval(()=>{
+  nTime--;document.getElementById("numberTime").textContent=nTime;
+  if(nTime<=0){
+   clearInterval(nTimer);nRunning=false;
+   document.getElementById("numberMsg").textContent="Time over! Try again.";
+  }
+ },1000);
+}
+
+// ---------- TARGET TAP ----------
+let tScore=0,tTime=20,tTimer=null,tRunning=false;
+function moveTarget(){
+ const area=document.getElementById("targetArea");
+ const button=document.getElementById("targetBtn");
+ const maxX=Math.max(0,area.clientWidth-button.offsetWidth);
+ const maxY=Math.max(0,area.clientHeight-button.offsetHeight);
+ button.style.left=Math.floor(Math.random()*(maxX+1))+"px";
+ button.style.top=Math.floor(Math.random()*(maxY+1))+"px";
+}
+function startTarget(){
+ clearInterval(tTimer);tScore=0;tTime=20;tRunning=true;
+ document.getElementById("targetScore").textContent=0;
+ document.getElementById("targetTime").textContent=20;
+ document.getElementById("targetBtn").disabled=false;
+ document.getElementById("targetMsg").textContent="Go!";
+ moveTarget();
+ tTimer=setInterval(()=>{
+  tTime--;document.getElementById("targetTime").textContent=tTime;
+  if(tTime<=0){
+   clearInterval(tTimer);tRunning=false;
+   document.getElementById("targetBtn").disabled=true;
+   document.getElementById("targetMsg").textContent="Time over! Score: "+tScore;
+   if(tScore>=10)addPoints(20,"Target Tap");
+  }
+ },1000);
+}
+function hitTarget(){
+ if(!tRunning)return;
+ tScore++;document.getElementById("targetScore").textContent=tScore;
+ moveTarget();effect("place");
+}
+
+// ---------- MEMORY MATCH ----------
+let firstCard=null,memoryLocked=false,foundPairs=0,moves=0;
+function startMemory(){
+ const icons=["🍎","🚀","🐼","⚽","🌟","🎲","🍕","🐸"];
+ const values=[...icons,...icons].sort(()=>Math.random()-.5);
+ firstCard=null;memoryLocked=false;foundPairs=0;moves=0;
+ document.getElementById("memoryMoves").textContent=0;
+ document.getElementById("memoryMsg").textContent="";
+ const el=document.getElementById("memoryGrid");el.innerHTML="";
+ values.forEach(value=>{
+  const button=document.createElement("button");
+  button.className="memorycard";button.textContent="❔";button.dataset.value=value;
+  button.onclick=()=>flipMemory(button);el.appendChild(button);
+ });
+}
+function flipMemory(button){
+ if(memoryLocked||button.disabled||button.textContent!=="❔")return;
+ button.textContent=button.dataset.value;
+ if(!firstCard){firstCard=button;return}
+ moves++;document.getElementById("memoryMoves").textContent=moves;
+ if(firstCard.dataset.value===button.dataset.value){
+  firstCard.disabled=true;button.disabled=true;firstCard=null;foundPairs++;
+  if(foundPairs===8){
+   document.getElementById("memoryMsg").textContent="All pairs matched!";
+   addPoints(40,"Memory Match");
+  }
+ }else{
+  memoryLocked=true;const old=firstCard;firstCard=null;
+  setTimeout(()=>{
+   old.textContent="❔";button.textContent="❔";memoryLocked=false;
+  },700);
+ }
+}
+
+// ---------- DAILY CHECK-IN ----------
+function dailyCheckin(){
+ const today=new Date().toLocaleDateString();
+ if(getData("checkin","")===today){setCheckinDone();return}
+ saveData("checkin",today);addPoints(10,"Daily Check-in");setCheckinDone();
+}
+function setCheckinDone(){
+ const button=document.getElementById("checkinBtn");
+ button.textContent="✓ Claimed Today";button.disabled=true;
+}
+
+// ---------- REWARD REQUESTS ----------
+function requestReward(type,requiredPoints){
+ if(points<requiredPoints){
+  toast("Not enough points. You need "+(requiredPoints-points)+" more.");
+  return;
+ }
+ if(!confirm("Submit "+type+" request for ₹10? "+requiredPoints+" points will be reserved."))return;
+ let requests=[];
+ try{requests=JSON.parse(getData("requests","[]"))}catch(e){}
+ const request={
+  id:"ET-"+Date.now().toString(36).toUpperCase(),
+  type:type,points:requiredPoints,rupees:10,
+  status:"Pending provider verification",
+  date:new Date().toLocaleString()
+ };
+ requests.unshift(request);
+ saveData("requests",JSON.stringify(requests));
+ points-=requiredPoints;updatePoints();renderRequests();
+ toast("Request saved as pending.");
+}
+function safeText(value){
+ return String(value).replace(/[&<>"']/g,char=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[char]));
+}
+function renderRequests(){
+ const el=document.getElementById("rewardRequests");
+ let requests=[];
+ try{requests=JSON.parse(getData("requests","[]"))}catch(e){}
+ if(!requests.length){el.textContent="No requests yet.";return}
+ el.innerHTML=requests.map(r=>
+  "<div style='padding:10px;border-bottom:1px solid #40506b'>"+
+  "<b>"+safeText(r.type)+"</b> — ₹"+Number(r.rupees)+
+  "<br><small>"+Number(r.points)+" points • "+safeText(r.status)+
+  "<br>"+safeText(r.date)+"</small>"+
+  "<br><small>Request: "+safeText(r.id)+"</small></div>"
+ ).join("");
+}
+
+// ---------- AD MILESTONES ----------
+function adCount(){return Math.max(0,Number(getData("adCount","0"))||0)}
+function updateAdUI(){
+ const count=adCount();
+ document.getElementById("adCount").textContent=count;
+ const milestones=[
+  {number:10,id:"milestone10",reward:100},
+  {number:75,id:"milestone75",reward:250},
+  {number:150,id:"milestone150",reward:1000}
+ ];
+ milestones.forEach(m=>{
+  const claimed=getData("adMilestone"+m.number,"false")==="true";
+  let message;
+  if(claimed)message="✓ Reward already claimed";
+  else if(count>=m.number)message="Milestone reached — "+m.reward+" points";
+  else message="Progress: "+count+" / "+m.number+" ads";
+  document.getElementById(m.id).textContent=message;
+ });
+}
+function watchRewardedAd(){
+ if(typeof window.EARNTOO_SHOW_REWARDED_AD!=="function"){
+  document.getElementById("adStatus").textContent=
+   "Rewarded ad provider is not connected. Ad views and points cannot be counted yet.";
+  toast("Ad provider is not connected yet.");
+  return;
+ }
+ window.EARNTOO_SHOW_REWARDED_AD(function(){
+  const count=adCount()+1;
+  saveData("adCount",count);
+  [
+   {number:10,reward:100},
+   {number:75,reward:250},
+   {number:150,reward:1000}
+  ].forEach(m=>{
+   if(count>=m.number&&getData("adMilestone"+m.number,"false")!=="true"){
+    saveData("adMilestone"+m.number,"true");
+    addPoints(m.reward,m.number+" ads milestone");
+   }
+  });
+  updateAdUI();
+ });
+}
+
+// ---------- PROFILE ----------
+function updateDashboard(){
+ document.getElementById("dashName").textContent=playerName||"Player";
+ document.getElementById("nickname").value=playerName||"";
+ updatePoints();
+}
+function saveProfile(){
+ const value=document.getElementById("nickname").value.trim();
+ if(!value){toast("Enter a player name.");return}
+ playerName=value;saveData("name",value);updateDashboard();
+ document.getElementById("profileMsg").textContent="Player name saved!";
+}
+
+// ---------- STARTUP ----------
+document.getElementById("soundBtn").textContent=
+ soundEnabled?"🔊 Sound ON":"🔇 Sound OFF";
+document.getElementById("nickname").value=playerName;
+updatePoints();
+updateDashboard();
+updateAdUI();
+renderRequests();
+startBlock();
+startMemory();
+if(!quizAvailable())showQuizLock();
+else startQuiz();
+if(getData("checkin","")===new Date().toLocaleDateString())setCheckinDone();
+</script>
+</body>
+</html>
